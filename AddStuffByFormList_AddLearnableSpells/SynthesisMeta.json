@@ -1,7 +1,7 @@
 {
-  "Nickname": "",
+  "Nickname": "ASBF Spells",
   "Visibility": "Visible",
-  "OneLineDescription": "",
+  "OneLineDescription": "Add Spells to \"Add Stuff By FormList\" based off what Spell Tomes are present.",
   "LongDescription": "",
   "PreferredAutoVersioning": "Default",
   "RequiredMods": [
