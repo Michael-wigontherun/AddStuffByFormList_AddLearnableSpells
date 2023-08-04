@@ -1,0 +1,13 @@
+{
+  "Nickname": "",
+  "Visibility": "Visible",
+  "OneLineDescription": "",
+  "LongDescription": "",
+  "PreferredAutoVersioning": "Default",
+  "RequiredMods": [
+    "Add Stuff By FormList.esp"
+  ],
+  "TargetedReleases": [
+    "SkyrimSE"
+  ]
+}
