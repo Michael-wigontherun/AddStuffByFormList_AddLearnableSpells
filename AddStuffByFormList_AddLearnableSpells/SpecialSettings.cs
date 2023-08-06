@@ -19,6 +19,9 @@ namespace AddStuffByFormList_AddLearnableSpells
         [Tooltip("Adds the Spell Books that was filtered out by Learnable Spell Mod Names Valid Half Cost Perks.")]
         public bool AddBooksFromLearnableSpellModNames = false;
 
+        [Tooltip("Supports a diferent Form List, a Container, or Level List\nIf you use a Level List its recomended to set it to Use All.")]
+        public FormKey AddBooksToThis = FormKey.Factory("000D63:Add Stuff By FormList.esp");
+
         [Tooltip("Add Specific Spell from FormKey, not the Spell Tome.")]
         public HashSet<FormKey> DirectSpells = new();
 

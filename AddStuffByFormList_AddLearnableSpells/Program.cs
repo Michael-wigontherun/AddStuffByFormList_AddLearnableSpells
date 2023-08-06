@@ -2,6 +2,8 @@ using Mutagen.Bethesda;
 using Mutagen.Bethesda.Synthesis;
 using Mutagen.Bethesda.Skyrim;
 using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Exceptions;
+using System.Reflection;
 
 namespace AddStuffByFormList_AddLearnableSpells
 {
@@ -22,10 +24,17 @@ namespace AddStuffByFormList_AddLearnableSpells
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
             Console.WriteLine("Hello World!");
+
+            if (!Settings.LearnableSpellModNames.Any())
+            {
+                Console.WriteLine("Missing Mod Names. This does nothing without setting what mods you want to add from.");
+                throw new Exception("Missing Mod Names. This does nothing without setting what mods you want to add from.");
+            }
+
             if(!state.LinkCache.TryResolve<IFormListGetter>(FormKey.Factory("000D63:Add Stuff By FormList.esp"), out var temp))
             {
                 Console.WriteLine("Could not find \"Add Stuff By FormList.esp\" FormList.");
-                return;
+                throw new MissingModException("Add Stuff By FormList.esp");
             }
             FormList _ASBF_FormListStuff = state.PatchMod.FormLists.GetOrAddAsOverride(temp);
             
@@ -64,10 +73,65 @@ namespace AddStuffByFormList_AddLearnableSpells
                 _ASBF_FormListStuff.Items.Add(spellKey);
             }
 
-            foreach(var bookKey in booksToAdd)
+            if (Settings.AddBooksFromLearnableSpellModNames)
+            {
+                if (Settings.AddBooksToThis.Equals(_ASBF_FormListStuff.FormKey))
+                {
+                    AddBooksTo(booksToAdd, _ASBF_FormListStuff);
+                    return;
+                }
+
+                if (state.LinkCache.TryResolve<ISkyrimMajorRecordGetter>(Settings.AddBooksToThis, out var rec))
+                {
+                    if (rec is IFormListGetter    formList)  AddBooksTo(booksToAdd, state.PatchMod.FormLists.GetOrAddAsOverride(formList));
+                    else if (rec is IContainerGetter   container) AddBooksTo(booksToAdd, state.PatchMod.Containers.GetOrAddAsOverride(container));
+                    else if (rec is ILeveledItemGetter levelList) AddBooksTo(booksToAdd, state.PatchMod.LeveledItems.GetOrAddAsOverride(levelList));
+                    else
+                    {
+                        Console.WriteLine("Add Books To This failed.");
+                        Console.WriteLine("Record either does not exist or it is not a FormList, Container, or Level Item List.");
+                    }
+                }
+            }
+        }
+
+        private static void AddBooksTo(HashSet<FormKey> booksToAdd, LeveledItem leveledItem)
+        {
+            if (leveledItem.Entries == null) leveledItem.Entries = new();
+
+            foreach (var bookKey in booksToAdd)
             {
                 Console.WriteLine($"Adding Spell Book {bookKey}");
-                _ASBF_FormListStuff.Items.Add(bookKey);
+                LeveledItemEntry leveledItemEntry = new();
+                leveledItemEntry.Data = new();
+                leveledItemEntry.Data.Reference.FormKey = bookKey;
+                leveledItemEntry.Data.Level = 1;
+                leveledItemEntry.Data.Count = 1;
+
+                leveledItem.Entries.Add(leveledItemEntry);
+            }
+        }
+
+        public static void AddBooksTo(HashSet<FormKey> booksToAdd, FormList formList)
+        {
+            foreach (var bookKey in booksToAdd)
+            {
+                Console.WriteLine($"Adding Spell Book {bookKey}");
+                formList.Items.Add(bookKey);
+            }
+        }
+
+        public static void AddBooksTo(HashSet<FormKey> booksToAdd, Container container)
+        {
+            if(container.Items == null) container.Items = new();
+
+            foreach (var bookKey in booksToAdd)
+            {
+                Console.WriteLine($"Adding Spell Book {bookKey}");
+                ContainerEntry containerEntry = new();
+                containerEntry.Item.Item.FormKey = bookKey;
+                containerEntry.Item.Count = 1;
+                container.Items.Add(containerEntry);
             }
         }
 
